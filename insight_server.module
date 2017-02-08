@@ -62,8 +62,8 @@ function insight_server_access_dashboard_page() {
 function insight_server_get_project_settings($node) {
   return [
     'title' => $node->title,
-    'machine_name' => !empty($node->field_machine_name[LANGUAGE_NONE][0]['value']) ?
-      $node->field_machine_name[LANGUAGE_NONE][0]['value'] : '',
+    'machine_name' => !empty($node->field_project_machine_name[LANGUAGE_NONE][0]['value']) ?
+      $node->field_project_machine_name[LANGUAGE_NONE][0]['value'] : '',
     'team' => insight_server_get_team($node, 'field_project_team'),
     'sites_groups' => insight_server_get_sites_groups($node, 'field_sites_group'),
   ];
