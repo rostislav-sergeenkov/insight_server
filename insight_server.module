@@ -5,3 +5,208 @@
  */
 
 include_once 'insight_server.features.inc';
+
+// @todo we need Project machine name field and check it on uniqueness.
+
+/**
+ * Implements hook_menu().
+ */
+function insight_server_menu() {
+  return [
+    'admin/config/services/insight_server/dashboard' => [
+      'title' => 'Insight Server Dashboard',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => ['insight_server_dashboard_form'],
+      'access callback' => 'insight_server_access_dashboard_page',
+      'type' => MENU_NORMAL_ITEM,
+      'file' => 'insight_server.pages.inc',
+    ],
+    'admin/config/services/insight_server/dashboard/%node' => [
+      'title callback' => 'insight_server_project_dashboard_title_callback',
+      'title arguments' => array(5),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => ['insight_server_project_dashboard_form', 5],
+      'access callback' => 'insight_server_access_dashboard_page',
+      'access arguments' => array(5),
+      'type' => MENU_NORMAL_ITEM,
+      'file' => 'insight_server.pages.inc',
+    ],
+    'admin/config/services/insight_server/dashboard/%node/batch_result' => [
+      'title' => 'Insight Server Batch Result',
+      'page callback' => 'insight_server_batch_result',
+      'access callback' => 'insight_server_access_dashboard_page',
+      'type' => MENU_NORMAL_ITEM,
+      'file' => 'insight_server.pages.inc',
+    ],
+  ];
+}
+
+/**
+ * Permissions callback.
+ *
+ * @todo implement logic
+ *
+ * @return bool
+ */
+function insight_server_access_dashboard_page() {
+  return TRUE;
+}
+
+/**
+ * Returns array of project settings.
+ *
+ * @param $node
+ *
+ * @return array
+ */
+function insight_server_get_project_settings($node) {
+  return [
+    'title' => $node->title,
+    'machine_name' => !empty($node->field_machine_name[LANGUAGE_NONE][0]['value']) ?
+      $node->field_machine_name[LANGUAGE_NONE][0]['value'] : '',
+    'team' => insight_server_get_team($node, 'field_project_team'),
+    'sites_groups' => insight_server_get_sites_groups($node, 'field_sites_group'),
+  ];
+}
+
+/**
+ * Returns array of user data (uid, name, mail).
+ *
+ * @param $node
+ * @param $field_name
+ *
+ * @return array
+ */
+function insight_server_get_team($node, $field_name) {
+  $team = [];
+  $uids = [];
+
+  $field_items = field_get_items('node', $node, $field_name);
+
+  if (!empty($field_items) && is_array($field_items)) {
+    foreach ($field_items as $items) {
+      $uids[] = $items['uid'];
+    }
+  }
+
+  $result = db_query('SELECT u.uid, u.name, u.mail FROM {users} u WHERE u.uid IN (:uids)',
+    [':uids' => $uids]);
+
+  foreach ($result as $item) {
+    $team[$item->uid] = [
+      'name' => $item->name,
+      'mail' => $item->mail,
+    ];
+  }
+
+  return $team;
+}
+
+/**
+ * Returns array of sites groups.
+ *
+ * @todo only unique values should be present in Group Machine Name and Sites (to use it as machine name) fields.
+ *
+ * @param $node
+ * @param $field_name
+ *
+ * @return array
+ */
+function insight_server_get_sites_groups($node, $field_name) {
+  $groups = [];
+
+  $field_items = field_get_items('node', $node, $field_name);
+
+  if (!empty($field_items) && is_array($field_items)) {
+    foreach ($field_items as $item) {
+      // Each site group is a field collection object.
+      $field_collection = entity_load('field_collection_item', [$item['value']]);
+      $field_collection = reset($field_collection);
+
+      if (!empty($field_collection)) {
+        $machine_name = !empty($field_collection->field_sites_group_machine_name[LANGUAGE_NONE][0]['value']) ?
+          $field_collection->field_sites_group_machine_name[LANGUAGE_NONE][0]['value'] : '';
+
+        $group = &$groups[$machine_name];
+
+        // Get group name.
+        $group['name'] = !empty($field_collection->field_sites_group_name[LANGUAGE_NONE][0]['value']) ?
+          $field_collection->field_sites_group_name[LANGUAGE_NONE][0]['value'] : '';;
+
+        // Get group machine name.
+        $group['machine_name'] = $machine_name;
+
+        // Get group secret key.
+        $group['key'] = !empty($field_collection->field_sites_group_key[LANGUAGE_NONE][0]['value']) ?
+          $field_collection->field_sites_group_key[LANGUAGE_NONE][0]['value'] : '';
+
+        // Get group statuses.
+        if (!empty($field_collection->field_sites_group_status) && is_array($field_collection->field_sites_group_status)) {
+          foreach ($field_collection->field_sites_group_status[LANGUAGE_NONE] as $status) {
+            $group['statuses'][] = $status['value'];
+          }
+        }
+
+        // Get group test suites.
+        if (!empty($field_collection->field_sites_group_test_suits) && is_array($field_collection->field_sites_group_test_suits)) {
+          foreach ($field_collection->field_sites_group_test_suits[LANGUAGE_NONE] as $suite) {
+            $group['test_suites'][] = $suite['value'];
+          }
+        }
+
+        // Get group of sites.
+        if (!empty($field_collection->field_sites_group_sites) && is_array($field_collection->field_sites_group_sites)) {
+          foreach ($field_collection->field_sites_group_sites[LANGUAGE_NONE] as $site) {
+            // @todo replace with actual site machine name in the future.
+            $site_machine_name = insight_server_get_machine_name($site['title']);
+            $group['sites'][$site_machine_name] = [
+              'title' => $site['title'],
+              'url' => rtrim($site['url'], '/'),
+            ];
+          }
+        }
+      }
+    }
+  }
+
+  return $groups;
+}
+
+/**
+ * Transforms a tring to a Drupal machine name.
+ *
+ * @param $string
+ */
+function insight_server_get_machine_name($string) {
+  return preg_replace('@[^a-z0-9-]+@','-', strtolower($string));
+}
+
+/**
+ * Returns the name of site variable.
+ *
+ * @param $project_machine_name
+ * @param $site_group_machine_name
+ * @param $site_machine_name
+ *
+ * @return string
+ */
+function insight_server_get_site_variable_name($project_machine_name, $site_group_machine_name, $site_machine_name) {
+  return 'insight_server_' . $project_machine_name . '_' . $site_group_machine_name . '_' . $site_machine_name;
+}
+
+//function insight_server_send_request($project_settings, $url) {
+//  $project_settings = insight_server_get_project_settings($project);
+//
+//}
+
+function insight_server_save_data($project) {
+
+}
+
+function insight_server_get_data() {
+
+}
+
+function insight_server_delete_data() {
+
+}
