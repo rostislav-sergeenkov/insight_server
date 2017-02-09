@@ -17,8 +17,12 @@ function insight_server_batch_process($site_title, $url, $variable, &$context) {
   $agent_response = insight_server_batch_send_request($site_title, $url);
 
   if (isset($agent_response['error'])) {
-    $context['results']['errors'][] = t('Cannot request test results from !url. Error: @error.',
-      ['!url' => insight_server_get_hostname($url), '@error' => $agent_response['code'] . ' ' . $agent_response['error']]);
+    $context['results']['errors'][] = t('Cannot request sanity check results from !url. Error: @error.',
+      ['!url' => $site_title . ' (' . insight_server_get_hostname($url) . ')', '@error' => $agent_response['code'] . ' ' . $agent_response['error']]);
+  }
+  else {
+    $context['results']['ok'][] = t('Sanity check results were successfully received from !url.',
+      ['!url' => $site_title . ' (' . insight_server_get_hostname($url) . ')']);
   }
 
   variable_set($variable, $agent_response);
@@ -44,6 +48,8 @@ function insight_server_batch_send_request($site_title, $url) {
     'requestTime' => microtime(TRUE),
     'results' => [],
   ];
+
+  // @todo leave the default value or define a constant.
   $agent_response = drupal_http_request($url, ['timeout' => 5]);
 
   if (!empty($agent_response->error)) {
@@ -80,6 +86,12 @@ function insight_server_batch_finished($success, $results, $operations) {
   if (!empty($results['errors'])) {
     foreach ($results['errors'] as $error) {
       drupal_set_message($error, 'error');
+    }
+  }
+
+  if (!empty($results['ok'])) {
+    foreach ($results['ok'] as $message) {
+      drupal_set_message($message, 'status');
     }
   }
 }
