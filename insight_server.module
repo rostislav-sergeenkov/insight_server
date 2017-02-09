@@ -7,6 +7,7 @@
 include_once 'insight_server.features.inc';
 
 // @todo we need Project machine name field and check it on uniqueness.
+// @todo think about mysql table instead of variable.
 
 /**
  * Implements hook_menu().
@@ -194,19 +195,17 @@ function insight_server_get_site_variable_name($project_machine_name, $site_grou
   return 'insight_server_' . $project_machine_name . '_' . $site_group_machine_name . '_' . $site_machine_name;
 }
 
-//function insight_server_send_request($project_settings, $url) {
-//  $project_settings = insight_server_get_project_settings($project);
-//
-//}
+/**
+ * Extracts and returns hostname from URL.
+ *
+ * @param $url
+ *
+ * @return string
+ */
+function insight_server_get_hostname($url) {
+  $parseUrl = parse_url(trim($url));
 
-function insight_server_save_data($project) {
+  $hostname = trim($parseUrl['host'] ? $parseUrl['host'] : array_shift(explode('/', $parseUrl['path'], 2)));
 
-}
-
-function insight_server_get_data() {
-
-}
-
-function insight_server_delete_data() {
-
+  return $parseUrl['scheme'] . '://' . $hostname;
 }
