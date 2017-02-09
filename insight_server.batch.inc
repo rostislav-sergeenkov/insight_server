@@ -42,13 +42,26 @@ function insight_server_batch_send_request($site_title, $url) {
     'site_title' => $site_title,
     'host' => insight_server_get_hostname($url),
     'requestTime' => microtime(TRUE),
+    'results' => [],
   ];
   $agent_response = drupal_http_request($url, ['timeout' => 5]);
 
   if (!empty($agent_response->error)) {
-    $response['results'] = [];
     $response['error'] = $agent_response->error;
     $response['code'] = $agent_response->code;
+  }
+  else {
+    $agent_response = json_decode($agent_response->data);
+    $response['supports_test_suits'] = $agent_response->testSuits;
+
+    if (!empty($agent_response->testSuites)) {
+      // @todo refactor in the future to retain testSuites and not to have plain list of tests.
+      foreach ($agent_response->testSuites as $suite) {
+        foreach ($suite as $test_label => $test_results) {
+          $response['results'][$test_label] = $test_results;
+        }
+      }
+    }
   }
 
   $response['responseTime'] = microtime(TRUE);

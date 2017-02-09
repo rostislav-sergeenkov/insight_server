@@ -8,6 +8,7 @@ include_once 'insight_server.features.inc';
 
 // @todo we need Project machine name field and check it on uniqueness.
 // @todo think about mysql table instead of variable.
+// @todo fix Camel case in request properties.
 
 /**
  * Implements hook_menu().
