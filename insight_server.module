@@ -6,6 +6,9 @@
 
 include_once 'insight_server.features.inc';
 
+// @todo update endpoint.
+define('INSIGHT_SERVER_AGENT_ENDPOINT', 'insight-agent/get.json');
+
 // @todo we need Project machine name field and check it on uniqueness.
 // @todo think about mysql table instead of variable.
 // @todo fix Camel case in request properties.

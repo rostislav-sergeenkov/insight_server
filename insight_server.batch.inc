@@ -26,6 +26,9 @@ function insight_server_batch_process($site_title, $url, $variable, &$context) {
   }
 
   variable_set($variable, $agent_response);
+
+  // @todo remove. Added just to demonstate possible network delays.
+  sleep(1);
 }
 
 /**

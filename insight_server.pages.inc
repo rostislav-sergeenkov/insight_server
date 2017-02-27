@@ -73,8 +73,8 @@ function insight_server_project_dashboard_form_refresh($form, &$form_state) {
       'testSuites' => $sites_group_settings['test_suites'],
       'secretKey' => $sites_group_settings['key'],
     ];
-    // @todo remove .json extension.
-    $agent_url = $site['url'] . '/insight-agent/get.json?' . drupal_http_build_query($query_parameters);
+    $agent_url = $site['url'] . '/' . INSIGHT_SERVER_AGENT_ENDPOINT . '?' . drupal_http_build_query($query_parameters);
+    watchdog('insight_server', $agent_url);
     $variable_name = insight_server_get_site_variable_name($project['machine_name'], $sites_group_settings['machine_name'], $site_machine_name);
     $batch_operations[] = ['insight_server_batch_process', [$site['title'], $agent_url, $variable_name]];
   }
@@ -140,14 +140,16 @@ function insight_server_project_dashboard_get_report($project_settings, $group_m
     $table_attributes = ['class' => ['drupal-insight-error-table']];
 
     foreach ($error_data as $error) {
-      $header[] = l($error['site_title'], $error['host']) . ' (' . round($error['responseTime'] - $error['requestTime'], 3) . ' sec)';
-      array_push($rows[0], ($error['code'] . ' ' . $error['error']));
-      // @todo refactor.
-      $checked_timestamp = round($error['responseTime']);
-      $uid = $error['uid'];
-      $username = $error['name'];
+      if (!empty($error)) {
+        $header[] = l($error['site_title'], $error['host']) . ' (' . round($error['responseTime'] - $error['requestTime'], 3) . ' sec)';
+        array_push($rows[0], ($error['code'] . ' ' . $error['error']));
+        // @todo refactor.
+        $checked_timestamp = round($error['responseTime']);
+        $uid = $error['uid'];
+        $username = $error['name'];
 
-      $rows_counter++;
+        $rows_counter++;
+      }
     }
   }
   else {
@@ -160,16 +162,30 @@ function insight_server_project_dashboard_get_report($project_settings, $group_m
     }
 
     foreach ($success_data as $result_data) {
-      $header[] = l($result_data['site_title'], $result_data['host']) . ' (' . round($result_data['responseTime'] - $result_data['requestTime'], 3) . ' sec)';
-      $rows_counter = 0;
-      // @todo refactor.
-      $checked_timestamp = round($result_data['responseTime']);
-      $uid = $result_data['uid'];
-      $username = $result_data['name'];
+      if (!empty($result_data)) {
+        $header[] = l($result_data['site_title'], $result_data['host']) . ' (' . round($result_data['responseTime'] - $result_data['requestTime'], 3) . ' sec)';
+        $rows_counter = 0;
+        // @todo refactor.
+        $checked_timestamp = round($result_data['responseTime']);
+        $uid = $result_data['uid'];
+        $username = $result_data['name'];
 
-      foreach ($result_data['results'] as $test_result) {
-        array_push($rows[$rows_counter], '<span class="' . strtolower($test_result->status) . '">' . $test_result->result . '</span>');
-        $rows_counter++;
+        foreach ($result_data['results'] as $test_result) {
+          if (!empty($test_result->url)) {
+            // @todo check why destination doesn't work on external sites.
+            $destination = drupal_get_destination();
+
+            if (isset($destination['destination'])) {
+              $destination['destination'] = $result_data['host'] . '/' . $destination['destination'];
+            }
+
+            $test_result->result = l($test_result->result, $result_data['host'] . '/' . $test_result->url,
+              ['external' => TRUE, 'query' => $destination, 'attributes' => ['target' => '_blank']]);
+          }
+
+          array_push($rows[$rows_counter], '<span class="' . strtolower($test_result->status) . '">' . $test_result->result . '</span>');
+          $rows_counter++;
+        }
       }
     }
   }
