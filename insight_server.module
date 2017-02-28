@@ -8,10 +8,14 @@ include_once 'insight_server.features.inc';
 
 // @todo update endpoint.
 define('INSIGHT_SERVER_AGENT_ENDPOINT', 'insight-agent/get.json');
+// @todo get dynamic value instead of predefined constant.
+define('INSIGHT_SERVER_NOTIFICATION_ENABLED', TRUE);
 
 // @todo we need Project machine name field and check it on uniqueness.
 // @todo think about mysql table instead of variable.
 // @todo fix Camel case in request properties.
+
+// @todo create admin Page or fields within a Project for email notification settings.
 
 /**
  * Implements hook_menu().
@@ -55,6 +59,16 @@ function insight_server_menu() {
  */
 function insight_server_access_dashboard_page() {
   return TRUE;
+}
+
+/**
+ * Implements hook_mail().
+ */
+function insight_server_mail($key, &$message, $params) {
+  if ($key == 'insight_server_notification') {
+    $message['subject'] = $params['subject'];
+    $message['body'] = $params['body'];
+  }
 }
 
 /**

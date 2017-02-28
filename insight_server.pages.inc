@@ -76,7 +76,7 @@ function insight_server_project_dashboard_form_refresh($form, &$form_state) {
     $agent_url = $site['url'] . '/' . INSIGHT_SERVER_AGENT_ENDPOINT . '?' . drupal_http_build_query($query_parameters);
     watchdog('insight_server', $agent_url);
     $variable_name = insight_server_get_site_variable_name($project['machine_name'], $sites_group_settings['machine_name'], $site_machine_name);
-    $batch_operations[] = ['insight_server_batch_process', [$site['title'], $agent_url, $variable_name]];
+    $batch_operations[] = ['insight_server_batch_process', [$site['title'], $project, $sites_group_settings, $agent_url, $variable_name]];
   }
 
   $batch = array(

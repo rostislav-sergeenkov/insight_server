@@ -9,12 +9,22 @@
  * Batch callback - sends, processes and saves HTTP request results to Insight Agent.
  *
  * @param $site_title
+ * @param $project
+ * @param $site_group
  * @param $url
  * @param $variable
  * @param $context
  */
-function insight_server_batch_process($site_title, $url, $variable, &$context) {
+function insight_server_batch_process($site_title, $project, $site_group, $url, $variable, &$context) {
   $agent_response = insight_server_batch_send_request($site_title, $url);
+
+  if (!isset($context['results']['project'])) {
+    $context['results']['project'] = $project;
+  }
+
+  if (!isset($context['results']['site_group'])) {
+    $context['results']['site_group'] = $site_group;
+  }
 
   if (isset($agent_response['error'])) {
     $context['results']['errors'][] = t('Cannot request sanity check results from !url. Error: @error.',
@@ -27,7 +37,7 @@ function insight_server_batch_process($site_title, $url, $variable, &$context) {
 
   variable_set($variable, $agent_response);
 
-  // @todo remove. Added just to demonstate possible network delays.
+  // @todo remove. Added just to demonstrate possible network delays.
   sleep(1);
 }
 
@@ -97,7 +107,45 @@ function insight_server_batch_finished($success, $results, $operations) {
       drupal_set_message($message, 'status');
     }
   }
+
+  // @todo get dynamic value instead of predefined constant.
+  if (INSIGHT_SERVER_NOTIFICATION_ENABLED) {
+    insight_server_send_notification($results['project'], $results['site_group']);
+  }
 }
 
+/**
+ * Sends email notification upon the completion of batch process.
+ */
+function insight_server_send_notification($project, $site_group) {
+  // @todo get dynamic values instead of hardcoded values.
+  module_load_include('inc', 'insight_server', 'insight_server.pages');
 
+  $to = implode(', ', insight_server_get_team_emails($project));
+  $body = insight_server_project_dashboard_get_report($project, $site_group['machine_name']);
 
+  $params = [
+    'subject' => t('Sanity check results for @project @group',
+      ['@project' => $project['title'], '@group' => $site_group['name']]),
+    'body' => [$body],
+  ];
+
+  drupal_mail('insight_server', 'insight_server_notification', $to, language_default(), $params, variable_get('site_mail', ini_get('sendmail_from')));
+}
+
+/**
+ * Returns array of team emails.
+ *
+ * @param $project
+ *
+ * @return array
+ */
+function insight_server_get_team_emails($project) {
+  $emails = [];
+
+  foreach ($project['team'] as $uid => $user) {
+    $emails[$uid] = $user['mail'];
+  }
+
+  return $emails;
+}

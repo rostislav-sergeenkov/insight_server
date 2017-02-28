@@ -1,0 +1,27 @@
+<?php
+
+/**
+ * @file
+ * Install, update, and uninstall functions for the Insight Server module.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function install_server_install() {
+  $default_email_settings = variable_get('mail_system', ['default-system' => 'DefaultMailSystem']);
+  $default_email_settings['insight_server'] = 'InsightServerMailSystem';
+  variable_set('mail_system', $default_email_settings);
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function install_server_uninstall() {
+  $default_email_settings = variable_get('mail_system', ['default-system' => 'DefaultMailSystem']);
+
+  if (isset($default_email_settings['insight_server'])) {
+    unset($default_email_settings['insight_server']);
+    variable_set('mail_system', $default_email_settings);
+  }
+}
