@@ -102,8 +102,7 @@ function insight_server_project_dashboard_get_report_data($project_settings, $gr
   return $data;
 }
 
-// @todo get rid fo spans and pseudo elements in CSS - use CSS classes instead.
-function insight_server_project_dashboard_get_report($project_settings, $group_machine_name) {
+function insight_server_project_dashboard_get_report($project_settings, $group_machine_name, $include_user_info = TRUE) {
   $data = insight_server_project_dashboard_get_report_data($project_settings, $group_machine_name);
 
   if (empty(array_filter($data))) {
@@ -137,7 +136,7 @@ function insight_server_project_dashboard_get_report($project_settings, $group_m
   if (!empty($error_data)) {
     $rows_counter = 0;
     $rows[] = [t('Error')];
-    $table_attributes = ['class' => ['drupal-insight-error-table']];
+    $table_attributes = ['class' => ['drupal-insight-table', 'drupal-insight-error-table']];
 
     foreach ($error_data as $error) {
       if (!empty($error)) {
@@ -183,23 +182,28 @@ function insight_server_project_dashboard_get_report($project_settings, $group_m
               ['external' => TRUE, 'query' => $destination, 'attributes' => ['target' => '_blank']]);
           }
 
-          array_push($rows[$rows_counter], '<span class="' . strtolower($test_result->status) . '">' . $test_result->result . '</span>');
+          array_push($rows[$rows_counter], ['data' => $test_result->result, 'class' => [strtolower($test_result->status)]]);
           $rows_counter++;
         }
       }
     }
   }
 
-  // @todo user object may not be present. Use user->name . ' ' . $user->mail from the response for such case.
-  // @todo check on 'view user accounts' permission.
-  $user_data = t('Last checked %interval by !user.', [
-    '!user' => l($username, 'user/' . $uid),
-    '%interval' => format_interval(REQUEST_TIME - $checked_timestamp) . ' ago',
-  ]);
+  if ($include_user_info) {
+    // @todo user object may not be present. Use user->name . ' ' . $user->mail from the response for such case.
+    // @todo check on 'view user accounts' permission.
+    $user_data = t('Last checked %interval by !user.', [
+      '!user' => l($username, 'user/' . $uid),
+      '%interval' => format_interval(REQUEST_TIME - $checked_timestamp) . ' ago',
+    ]);
 
-  $user_data = '<div class="user-data">' . $user_data . '</div>';
+    $user_data = '<p class="user-data">' . $user_data . '</p>';
 
-  $markup .= $user_data . theme('table', ['header' => $header, 'rows' => $rows, 'attributes' => $table_attributes]);
+    $markup .= $user_data . theme('table', ['header' => $header, 'rows' => $rows, 'attributes' => $table_attributes]);
+  }
+  else {
+    $markup .= theme('table', ['header' => $header, 'rows' => $rows, 'attributes' => $table_attributes]);
+  }
 
   return $markup;
 }

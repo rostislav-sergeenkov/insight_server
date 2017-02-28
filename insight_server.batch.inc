@@ -27,11 +27,11 @@ function insight_server_batch_process($site_title, $project, $site_group, $url, 
   }
 
   if (isset($agent_response['error'])) {
-    $context['results']['errors'][] = t('Cannot request sanity check results from !url. Error: @error.',
+    $context['results']['errors'][] = t('Sanity check cannot be run on !url. Error: @error.',
       ['!url' => $site_title . ' (' . insight_server_get_hostname($url) . ')', '@error' => $agent_response['code'] . ' ' . $agent_response['error']]);
   }
   else {
-    $context['results']['ok'][] = t('Sanity check results were successfully received from !url.',
+    $context['results']['ok'][] = t('Sanity check is successfully completed on !url.',
       ['!url' => $site_title . ' (' . insight_server_get_hostname($url) . ')']);
   }
 
@@ -122,7 +122,7 @@ function insight_server_send_notification($project, $site_group) {
   module_load_include('inc', 'insight_server', 'insight_server.pages');
 
   $to = implode(', ', insight_server_get_team_emails($project));
-  $body = insight_server_project_dashboard_get_report($project, $site_group['machine_name']);
+  $body = insight_server_project_dashboard_get_report($project, $site_group['machine_name'], FALSE);
 
   $params = [
     'subject' => t('Sanity check results for @project @group',

@@ -1,0 +1,63 @@
+.drupal-insight-table {
+  width: 100%;
+  font-size: 12px;
+  margin: 0 0 10px;
+  border: 1px solid #bebfb9;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.drupal-insight-table tr.even,
+.drupal-insight-table tr.odd {
+  border-bottom: 1px solid #ccc;
+  padding: 0.1em 0.6em;
+}
+
+.drupal-insight-table tr.even {
+  background-color: #eee;
+}
+
+.drupal-insight-table th {
+  text-transform: uppercase;
+  background: #e1e2dc;
+  font-weight: normal;
+  padding: 3px 10px;
+}
+
+.drupal-insight-table td,
+.drupal-insight-table th {
+  vertical-align: middle;
+  padding: 8px 10px;
+  border: 1px solid #bebfb9;
+  color: #000;
+}
+
+.drupal-insight-error-table tr.odd {
+  background-color: #EDD1C7;
+}
+
+.drupal-insight-error-table tr.even {
+  background-color: #EDE2DF;
+}
+
+.drupal-insight-table td {
+  font-weight: bold;
+  color: #3b3b3b;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.drupal-insight-table td.error {
+  background-color: #ffcccc;
+}
+
+.drupal-insight-table td.warning {
+  background-color: #ffffcc;
+}
+
+.drupal-insight-table td.ok {
+  background-color: #ccffcc;
+}
+
+#insight-server-project-dashboard-form .user-data {
+  font-size: 12px;
+}

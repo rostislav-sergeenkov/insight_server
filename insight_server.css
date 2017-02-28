@@ -6,25 +6,22 @@
   background-color: #EDE2DF;
 }
 
-.drupal-insight-table span {
-  display: block;
+.drupal-insight-table td {
   font-weight: bold;
   color: #3b3b3b;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  margin: -4px -9px !important;
-  padding: 0 4px;
 }
 
-.drupal-insight-table span.error {
-  background-color: #EDD1C7;
+.drupal-insight-table td.error {
+  background-color: #ffcccc;
 }
 
-.drupal-insight-table span.warning {
-  background-color: #EDE6C7;
+.drupal-insight-table td.warning {
+  background-color: #ffffcc;
 }
 
-.drupal-insight-table span.ok {
-  background-color: #C7EDC7;
+.drupal-insight-table td.ok {
+  background-color: #ccffcc;
 }
 
 #insight-server-project-dashboard-form .user-data {
