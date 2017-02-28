@@ -3,7 +3,6 @@ description = Quickly does sanity check and provides aggregate status informatio
 core = 7.x
 package = Other
 version = 7.x-1.0
-files[] = classes/InsightServerMailSystem.php
 dependencies[] = ctools
 dependencies[] = features
 dependencies[] = field_collection
